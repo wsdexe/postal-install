@@ -1,6 +1,6 @@
 # Update this to match the hostname you wish to use for accessing the
 # Postal web interface.
-postal.yourdomain.com {
+web.postal.yourdomain.com {
   reverse_proxy 127.0.0.1:5000
 }
 
