@@ -4,12 +4,15 @@ postal:
   web_hostname: web.postal.yourdomain.com
   web_protocol: https
   smtp_hostname: web.postal.yourdomain.com
+  use_ip_pools: true
+  received_header: from api (10-42-11-130.email.vs-ru.svc.cluster.local [10.42.11.130]) by VS with HTTP
 
 main_db:
   host: 127.0.0.1
   username: root
   password: postal
   database: postal
+  pool_size: 20
 
 message_db:
   host: 127.0.0.1
@@ -18,29 +21,30 @@ message_db:
   prefix: postal
 
 smtp_server:
-  default_bind_address: "::"
+  default_port: 5454
 
+worker:
+  threads: 5
+  
 dns:
-  # Specify the DNS records that you have configured. Refer to the documentation at
-  # https://github.com/atech/postal/wiki/Domains-&-DNS-Configuration for further
-  # information about these.
   mx_records:
     - mail.postal.yourdomain.com
   spf_include: spf.postal.yourdomain.com
   return_path_domain: rp.postal.yourdomain.com
   route_domain: routes.postal.yourdomain.com
   track_domain: track.postal.yourdomain.com
+  dkim_identifier: vs
+  domain_verify_prefix: vs-verification
+  custom_return_path_prefix: rp
+  skip_return_path_dns_verification: true
 
 smtp:
-  # Specify an SMTP server that can be used to send messages from the Postal management
-  # system to users. You can configure this to use a Postal mail server once the
-  # your installation has been set up.
   host: 127.0.0.1
   port: 2525
   username: # Complete when Postal is running and you can
   password: # generate the credentials within the interface.
-  from_name: INFO
-  from_address: info@postal.yourdomain.com
+  from_name: Info
+  from_address: postal.yourdomain.com
 
 rails:
   # This is generated automatically by the config initialization. It should be a random
