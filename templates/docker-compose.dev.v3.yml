@@ -1,0 +1,67 @@
+version: "3.9"
+
+# Development configuration - builds from local source
+# Set POSTAL_SOURCE_PATH environment variable or use default: /opt/postal/app
+#
+# Usage:
+#   export POSTAL_SOURCE_PATH=/path/to/postal
+#   postal --local build
+#   postal --local start
+
+services:
+  web:
+    build:
+      context: ${POSTAL_SOURCE_PATH:-/opt/postal/app}
+      dockerfile: Dockerfile
+    image: postal:dev
+    command: postal web-server
+    network_mode: host
+    volumes:
+      - /opt/postal/config:/config
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/app:/opt/postal/app/app
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/lib:/opt/postal/app/lib
+    restart: unless-stopped
+    environment:
+      - RAILS_ENV=development
+
+  smtp:
+    image: postal:dev
+    command: postal smtp-server
+    network_mode: host
+    cap_add:
+      - NET_BIND_SERVICE
+    volumes:
+      - /opt/postal/config:/config
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/app:/opt/postal/app/app
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/lib:/opt/postal/app/lib
+    restart: unless-stopped
+    environment:
+      - RAILS_ENV=development
+    depends_on:
+      - web
+
+  worker:
+    image: postal:dev
+    command: postal worker
+    network_mode: host
+    volumes:
+      - /opt/postal/config:/config
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/app:/opt/postal/app/app
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/lib:/opt/postal/app/lib
+    restart: unless-stopped
+    environment:
+      - RAILS_ENV=development
+    depends_on:
+      - web
+
+  runner:
+    profiles: ["tools"]
+    image: postal:dev
+    command: postal
+    network_mode: host
+    volumes:
+      - /opt/postal/config:/config
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/app:/opt/postal/app/app
+      - ${POSTAL_SOURCE_PATH:-/opt/postal/app}/lib:/opt/postal/app/lib
+    environment:
+      - RAILS_ENV=development
