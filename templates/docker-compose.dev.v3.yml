@@ -1,0 +1,68 @@
+version: "3.9"
+
+# Development configuration - builds from local source
+# Source code path: /root/postal/
+
+services:
+  web:
+    build:
+      context: /root/postal
+      dockerfile: Dockerfile
+    image: postal:dev
+    command: postal web-server
+    network_mode: host
+    volumes:
+      - /opt/postal/config:/config
+      - /root/postal/app:/opt/postal/app/app           # Hot-reload: app code
+      - /root/postal/lib:/opt/postal/app/lib           # Hot-reload: libraries
+      - /root/postal/config:/opt/postal/app/config     # Hot-reload: config
+    restart: unless-stopped
+    environment:
+      - RAILS_ENV=development
+
+  smtp:
+    build:
+      context: /root/postal
+      dockerfile: Dockerfile
+    image: postal:dev
+    command: postal smtp-server
+    network_mode: host
+    cap_add:
+      - NET_BIND_SERVICE
+    volumes:
+      - /opt/postal/config:/config
+      - /root/postal/app:/opt/postal/app/app
+      - /root/postal/lib:/opt/postal/app/lib
+    restart: unless-stopped
+    environment:
+      - RAILS_ENV=development
+
+  worker:
+    build:
+      context: /root/postal
+      dockerfile: Dockerfile
+    image: postal:dev
+    command: postal worker
+    network_mode: host
+    volumes:
+      - /opt/postal/config:/config
+      - /root/postal/app:/opt/postal/app/app
+      - /root/postal/lib:/opt/postal/app/lib
+    restart: unless-stopped
+    environment:
+      - RAILS_ENV=development
+
+  runner:
+    profiles: ["tools"]
+    build:
+      context: /root/postal
+      dockerfile: Dockerfile
+    image: postal:dev
+    command: postal
+    network_mode: host
+    volumes:
+      - /opt/postal/config:/config
+      - /root/postal/app:/opt/postal/app/app
+      - /root/postal/lib:/opt/postal/app/lib
+    environment:
+      - RAILS_ENV=development
