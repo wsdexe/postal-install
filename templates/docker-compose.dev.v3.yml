@@ -13,7 +13,6 @@ services:
     build:
       context: ${POSTAL_SOURCE_PATH:-/opt/postal/app}
       dockerfile: Dockerfile
-      target: ci
     image: postal:dev
     command: postal web-server
     network_mode: host
