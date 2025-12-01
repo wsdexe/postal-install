@@ -7,7 +7,6 @@ ROOT_DIR=$( cd "$( dirname "${ORIGINAL_SCRIPT}" )/.." && pwd )
 DEV_MODE="false"
 GIT_PULL="true"
 FORCE_VERSION=""
-LOCAL_BUILD="false"
 
 if command -v gsed &> /dev/null
 then
@@ -40,10 +39,6 @@ while [[ $# -gt 0 ]]; do
         ;;
         --no-git-pull)
             GIT_PULL="false"
-            shift
-        ;;
-        --local)
-            LOCAL_BUILD="true"
             shift
         ;;
         *)
@@ -96,18 +91,8 @@ set-postal-version() {
         MAJOR_VERSION=3
     fi
 
-    # Copy the new one (use dev template if --local flag is set)
-    if [ "$LOCAL_BUILD" == "true" ]; then
-        if [ -f "templates/docker-compose.dev.v$MAJOR_VERSION.yml" ]; then
-            cp templates/docker-compose.dev.v$MAJOR_VERSION.yml docker-compose.yml
-            echo "Using local development template (docker-compose.dev.v$MAJOR_VERSION.yml)"
-        else
-            echo "Dev template for v$MAJOR_VERSION not found, using standard template"
-            cp templates/docker-compose.v$MAJOR_VERSION.yml docker-compose.yml
-        fi
-    else
-        cp templates/docker-compose.v$MAJOR_VERSION.yml docker-compose.yml
-    fi
+    # Copy the new one
+    cp templates/docker-compose.v$MAJOR_VERSION.yml docker-compose.yml
 
     # Set the number of workers as appropriate
     if [ -f "worker-replicas" ]
@@ -213,19 +198,9 @@ case "$1" in
         run-docker-compose "exec $2 bash"
         ;;
 
-    build)
-        echo "Building Postal from local source..."
-        run-docker-compose "build ${@:2}"
-        ;;
-
     initialize)
-        if [ "$LOCAL_BUILD" == "true" ]; then
-            call-hook "pre-initialize-build"
-            run-docker-compose "build"
-        else
-            call-hook "pre-initialize-pull"
-            run-docker-compose "pull"
-        fi
+        call-hook "pre-initialize-pull"
+        run-docker-compose "pull"
         call-hook "pre-initialize"
         run-docker-compose "run --rm runner postal initialize"
         call-hook "post-initialize"
@@ -261,13 +236,8 @@ case "$1" in
         set-postal-version $latest_version
         echo "Upgrading to $latest_version"
 
-        if [ "$LOCAL_BUILD" == "true" ]; then
-            call-hook "pre-upgrade-build"
-            run-docker-compose "build"
-        else
-            call-hook "pre-upgrade-pull"
-            run-docker-compose "pull"
-        fi
+        call-hook "pre-upgrade-pull"
+        run-docker-compose "pull"
         call-hook "pre-upgrade-db"
         run-docker-compose "run --rm runner postal upgrade"
         call-hook "post-upgrade-db"
@@ -362,13 +332,7 @@ case "$1" in
 
         ;;
     *)
-        echo "Usage: postal [options] [command]"
-        echo
-        echo "Options:"
-        echo
-        echo -e " * \e[33m--local\e[0m - use local source build instead of Docker Hub image"
-        echo -e " * \e[33m--version x.x.x\e[0m - force specific version"
-        echo -e " * \e[33m--dev\e[0m - dry-run mode (print commands only)"
+        echo "Usage: postal [command]"
         echo
         echo "Running postal:"
         echo
@@ -382,7 +346,6 @@ case "$1" in
         echo
         echo -e " * \e[32minitialize\e[0m - create and load the DB schema"
         echo -e " * \e[32mupgrade\e[0m - upgrade the DB schema"
-        echo -e " * \e[32mbuild\e[0m - build Docker image from local source (requires --local)"
         echo
         echo "Other tools:"
         echo
