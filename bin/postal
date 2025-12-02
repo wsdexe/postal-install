@@ -60,10 +60,8 @@ call-hook() {
 
 run-docker-compose() {
     if [ ! -f "docker-compose.yml" ]; then
-        echo 'No docker-compose file available. Generating using latest available version...'
-        latest_version=`get-latest-postal-version`
-        echo "Latest verison is $latest_version"
-        set-postal-version $latest_version
+        echo 'No docker-compose file available. Generating with default version (latest)...'
+        set-postal-version "latest"
     fi
 
     if command -v docker-compose &> /dev/null
@@ -219,15 +217,14 @@ case "$1" in
             exit $?
         fi
 
-        # Get the latest verison of Postal which we want to upgrade
-        # to if no other version is provided.
+        # Determine version to upgrade to
         if [ "$2" == "" ]; then
-            if [ ! $FORCE_VERSION == "" ]; then
+            if [ ! "$FORCE_VERSION" == "" ]; then
                 latest_version="$FORCE_VERSION"
                 echo "Using version: $latest_version"
             else
-                echo 'No version specified, using latest available version...'
-                latest_version=`get-latest-postal-version`
+                latest_version="latest"
+                echo "Using default version: latest"
             fi
         else
             latest_version="$2"
@@ -288,14 +285,13 @@ case "$1" in
             exit 1
         fi
 
-        # Get the latest verison of Postal as the starting version for a
-        # new installation.
-        if [ ! $FORCE_VERSION == "" ]; then
+        # Determine version to use
+        if [ ! "$FORCE_VERSION" == "" ]; then
             latest_version="$FORCE_VERSION"
             echo "Using version: $latest_version"
         else
-            latest_version=`get-latest-postal-version`
-            echo "Latest version is: $latest_version"
+            latest_version="latest"
+            echo "Using default version: latest"
         fi
 
         set-postal-version $latest_version
@@ -346,6 +342,7 @@ case "$1" in
         echo
         echo -e " * \e[32minitialize\e[0m - create and load the DB schema"
         echo -e " * \e[32mupgrade\e[0m - upgrade the DB schema"
+        echo -e " * \e[32mset-version [tag]\e[0m - set Docker image tag (e.g. latest, feature-xxx)"
         echo
         echo "Other tools:"
         echo
