@@ -109,6 +109,18 @@ set-postal-version() {
     call-hook "set-postal-version"
 }
 
+get-current-version() {
+    # Extract current version from docker-compose.yml
+    if [ -f "docker-compose.yml" ]; then
+        local current=$($SED -n 's/.*ghcr\.io\/wsdexe\/postal:\([^"]*\).*/\1/p' docker-compose.yml | head -1)
+        if [ -n "$current" ]; then
+            echo "$current"
+            return 0
+        fi
+    fi
+    echo "latest"
+}
+
 get-latest-postal-version() {
 
     if ! command -v curl &> /dev/null
@@ -223,8 +235,9 @@ case "$1" in
                 latest_version="$FORCE_VERSION"
                 echo "Using version: $latest_version"
             else
-                latest_version="latest"
-                echo "Using default version: latest"
+                # Use current version from docker-compose.yml
+                latest_version=$(get-current-version)
+                echo "Using current version: $latest_version"
             fi
         else
             latest_version="$2"
